@@ -5,6 +5,10 @@
 # Valeurs non sensibles : en dur ci-dessous.
 # Valeurs sensibles : lues depuis l'environnement (secrets GitHub) :
 #   DJANGO_SECRET_KEY, POSTGRES_PASSWORD, EMAIL_HOST_PASSWORD
+#
+# ⚠️ DJANGO_SECRET_KEY doit être "URL-safe" (A-Z a-z 0-9 _ -) : PAS de $ # " ' espace,
+#    sinon Docker Compose casse le .env (interpolation $VAR, commentaire #).
+#    Générer : python3 -c "import secrets; print(secrets.token_urlsafe(64))"
 set -e
 
 cat > .env <<EOF
@@ -24,7 +28,7 @@ DJANGO_CSRF_TRUSTED_ORIGINS=https://lemanouthe.com
 POSTGRES_DB=portfolio
 POSTGRES_USER=portfoliouser
 POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-POSTGRES_HOST=host.docker.internal
+POSTGRES_HOST=172.17.0.1
 POSTGRES_PORT=5432
 
 # --- Email ---

@@ -54,11 +54,13 @@ Aucun venv : tout est dans les conteneurs.
 
 **Setup serveur (une fois)** :
 ```bash
-cp .env.example .env                        # VIRTUAL_HOST, LETSENCRYPT_EMAIL, secrets DB/Django/email
+./gen-env.sh                                 # génère le .env (secret Django auto, saisie guidée)
 docker network create net                   # réseau externe partagé avec le reverse proxy (si absent)
 mkdir -p static media logs                   # dossiers montés dans le conteneur
 sudo chown -R 1000:1000 static media logs    # uid utilisé par le conteneur
 ```
+(`gen-env.sh` remplace la copie manuelle de `.env.example` ; il génère une `DJANGO_SECRET_KEY`
+forte et pose les permissions `600` sur le `.env`.)
 Si le serveur n'a **pas encore** de reverse proxy, lancer aussi (une fois, pour tout le
 serveur) : `docker compose -f docker-compose.proxy.yml up -d` — voir
 [NOTE-SERVEUR-PARTAGE.md](NOTE-SERVEUR-PARTAGE.md). Sinon, ignorer ce fichier.

@@ -52,22 +52,30 @@ cd frontend && npm run build                                    # le front compi
 
 Aucun venv : tout est dans les conteneurs.
 
-**Setup serveur (une fois)** :
+Le serveur n'exécute **pas** le code source : il héberge seulement `docker-compose.yml`
++ `.env` et **tire l'image** depuis GHCR. Pas besoin de cloner tout le repo ni de builder.
+
+**Setup serveur (une fois)** dans `/home/<user>/projects/myporfolio/` :
 ```bash
+# récupérer les fichiers de déploiement (au choix) :
+#   - copier docker-compose.yml (+ docker-compose.proxy.yml, gen-env.sh) via scp, ou
+#   - git clone https://github.com/lemanouthe/myporfolio.git .   (le repo sert de source)
 ./gen-env.sh                                 # génère le .env (secret Django auto, saisie guidée)
 docker network create net                   # réseau externe partagé avec le reverse proxy (si absent)
 mkdir -p static media logs                   # dossiers montés dans le conteneur
 sudo chown -R 1000:1000 static media logs    # uid utilisé par le conteneur
 ```
-(`gen-env.sh` remplace la copie manuelle de `.env.example` ; il génère une `DJANGO_SECRET_KEY`
-forte et pose les permissions `600` sur le `.env`.)
 Si le serveur n'a **pas encore** de reverse proxy, lancer aussi (une fois, pour tout le
 serveur) : `docker compose -f docker-compose.proxy.yml up -d` — voir
 [NOTE-SERVEUR-PARTAGE.md](NOTE-SERVEUR-PARTAGE.md). Sinon, ignorer ce fichier.
 
-**Démarrer / redéployer** :
+> Le déploiement auto **ne fait pas** `git pull`. Si tu modifies `docker-compose.yml`,
+> re-copie-le (ou `git pull`) manuellement sur le serveur une fois.
+
+**Démarrer / redéployer** (le serveur TIRE l'image, il ne build pas) :
 ```bash
-docker compose up -d --build
+echo <token> | docker login ghcr.io -u lemanouthe --password-stdin   # si package privé
+docker compose up -d --pull always --remove-orphans
 ```
 Au démarrage du conteneur, `backend/start.sh` lance `migrate` + `collectstatic` puis
 gunicorn (qui sert à la fois l'API et le SPA Vue). `static/`, `media/`, `logs/` sont des
@@ -76,6 +84,17 @@ et route tout vers `web:8010` ; le SPA, l'API, `/static` et `/media` sortent du 
 
 **TLS** : géré par acme-companion (Let's Encrypt) via `LETSENCRYPT_HOST`/`LETSENCRYPT_EMAIL`.
 
+## CI/CD (GitHub Actions)
+
+Sur `git push origin main` → 3 jobs : **test** (tests back + build front) → **build-push**
+(image `ghcr.io/lemanouthe/myporfolio:latest` construite et poussée sur GHCR) → **deploy**
+(SSH sur le serveur : `docker login ghcr` + `docker compose up -d --pull always`, puis
+nettoyage scopé `label=com.docker.compose.project=portfolio`). Le serveur ne build ni ne
+`git pull` : il tire simplement la nouvelle image.
+
+Secrets repo requis : `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY` (accès SSH). Le push/pull
+GHCR utilise le `GITHUB_TOKEN` intégré — aucun secret supplémentaire.
+
 ## Cohabitation avec d'autres projets sur le serveur
 
 Ce projet est **isolé** : `name: portfolio` dans le compose préfixe toutes ses ressources
@@ -83,7 +102,7 @@ Ce projet est **isolé** : `name: portfolio` dans le compose préfixe toutes ses
 donc ce projet ne crée ni conteneur `db` ni volume de données.
 
 Une mise à jour **n'impacte pas** les autres conteneurs :
-- `docker compose up -d --build` ne (re)crée **que** les services de ce projet. Il ne
+- `docker compose up -d --pull always` ne (re)crée **que** les services de ce projet. Il ne
   touche ni les conteneurs, ni les images, ni les volumes des autres projets.
 - Aucun port hôte n'est publié (`expose` seul) → **zéro conflit de port**.
 - Le réseau `net` est `external` → Compose ne le crée ni ne le supprime jamais ; les

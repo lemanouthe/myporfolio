@@ -11,7 +11,7 @@ cohabite avec vos projets, ce dont il dépend, et ce qu'il ne faut pas casser.
 - Le portfolio tourne dans **son propre projet Docker Compose** nommé `portfolio`.
   Toutes ses ressources sont préfixées `portfolio-*` / `portfolio_*` → **aucune collision**
   avec vos conteneurs, images ou volumes.
-- Ses mises à jour (`docker compose up -d --build`) **ne touchent que lui**.
+- Ses mises à jour (`docker compose up -d --pull always`) **ne touchent que lui**.
 - Il **ne publie aucun port hôte** → zéro conflit de port.
 - Il **s'attache** au reverse proxy partagé (réseau `net` + nginx-proxy) mais ne le
   gère pas et ne le modifie pas.

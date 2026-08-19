@@ -7,6 +7,10 @@ services:
   # nginx-proxy + acme-companion (externes, sur `net`) gèrent TLS + routage par host.
   # La base PostgreSQL est EXTERNE (créée sur le serveur) : voir POSTGRES_* dans .env.
   web:
+    # Image construite et poussée par la CI (GitHub Actions) sur GHCR.
+    # Le serveur la TIRE (docker compose up --pull always) — il ne build pas.
+    image: ghcr.io/lemanouthe/myporfolio:latest
+    # `build` conservé pour un build local éventuel (docker compose build).
     build:
       context: .
       dockerfile: backend/Dockerfile

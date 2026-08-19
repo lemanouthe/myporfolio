@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
 
+env:
+  IMAGE: ghcr.io/lemanouthe/myporfolio
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -16,20 +19,48 @@ jobs:
         run: |
           pip install -r backend/requirements.txt
           python backend/manage.py test
-        working-directory: .
 
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Frontend build
+      - name: Frontend build (vérifie la compilation)
         run: |
           npm ci
           npm run build
         working-directory: frontend
 
-  deploy:
+  # Build de l'image (front + back dans une image) et push sur GHCR.
+  build-push:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build & push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: backend/Dockerfile
+          push: true
+          tags: ${{ env.IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Déploiement : le serveur TIRE l'image (pas de build), scopé au projet.
+  deploy:
+    needs: build-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
@@ -37,9 +68,13 @@ jobs:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
           script: |
             set -e
-            cd /home/ubuntu/projects/myporfolio || { echo "✗ Dossier introuvable — vérifie le chemin"; exit 1; }
-            test -f docker-compose.yml || { echo "✗ Pas de docker-compose.yml dans $(pwd) — repo mal cloné ou mauvais dossier"; exit 1; }
-            git pull origin main
-            docker compose up -d --build
+            cd /home/${{ secrets.SERVER_USER }}/projects/myporfolio || { echo "✗ Dossier introuvable"; exit 1; }
+            test -f docker-compose.yml || { echo "✗ docker-compose.yml absent dans $(pwd)"; exit 1; }
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            docker compose up -d --pull always --remove-orphans
+            # Nettoyage SCOPÉ au projet portfolio (serveur partagé) :
+            docker image prune -f || true
+            docker container prune -f --filter "label=com.docker.compose.project=portfolio" || true

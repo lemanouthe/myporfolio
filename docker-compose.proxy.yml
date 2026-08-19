@@ -1,0 +1,60 @@
+# Reverse proxy PARTAGÉ (nginx-proxy + acme-companion) — OPTIONNEL.
+#
+# ⚠️ À lancer UNE SEULE FOIS pour tout le serveur, et SEULEMENT si aucun autre
+#    projet ne fournit déjà nginx-proxy. Deux nginx-proxy = conflit sur 80/443.
+#
+# Vérifier avant de lancer :
+#   docker ps --filter "publish=80"        # si quelque chose écoute déjà sur :80, NE PAS lancer
+#
+# Démarrage (une fois) :
+#   docker network create net              # si le réseau n'existe pas encore
+#   docker compose -f docker-compose.proxy.yml up -d
+#
+# Ensuite chaque app (dont le portfolio) s'y attache via le réseau externe `net`
+# et ses variables VIRTUAL_HOST / LETSENCRYPT_HOST.
+
+name: proxy
+
+services:
+  nginx-proxy:
+    image: nginxproxy/nginx-proxy:latest
+    container_name: nginx-proxy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    networks:
+      - net
+
+  acme-companion:
+    image: nginxproxy/acme-companion:latest
+    container_name: acme-companion
+    restart: unless-stopped
+    environment:
+      DEFAULT_EMAIL: ${LETSENCRYPT_EMAIL:-mamoutoudoumbia89@gmail.com}
+      NGINX_PROXY_CONTAINER: nginx-proxy
+    volumes:
+      - certs:/etc/nginx/certs
+      - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
+      - acme:/etc/acme.sh
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - nginx-proxy
+    networks:
+      - net
+
+networks:
+  net:
+    external: true
+
+volumes:
+  certs:
+  vhost:
+  html:
+  acme:

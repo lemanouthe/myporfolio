@@ -1,0 +1,36 @@
+# Nom de projet explicite : toutes les ressources (conteneur web, image) sont
+# préfixées `portfolio-*`. Isolation totale vis-à-vis des autres projets Docker.
+name: portfolio
+
+services:
+  # Un seul conteneur : API Django + SPA Vue (servi par WhiteNoise, même origine).
+  # nginx-proxy + acme-companion (externes, sur `net`) gèrent TLS + routage par host.
+  # La base PostgreSQL est EXTERNE (créée sur le serveur) : voir POSTGRES_* dans .env.
+  web:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    command: ./start.sh
+    restart: unless-stopped
+    expose:
+      - "8010"
+    environment:
+      - VIRTUAL_HOST=lemanouthe.com
+      - VIRTUAL_PORT=8010
+      - LETSENCRYPT_HOST=lemanouthe.com
+      - LETSENCRYPT_EMAIL=mamoutoudoumbia89@gmail.com
+    env_file:
+      - .env
+    volumes:
+      - ./static:/app/staticfiles   # dossier créé sur le serveur
+      - ./media:/app/media          # dossier créé sur le serveur
+      - ./logs:/app/logs            # dossier créé sur le serveur
+    extra_hosts:
+      # Permet POSTGRES_HOST=host.docker.internal si la BD tourne sur l'hôte.
+      - "host.docker.internal:host-gateway"
+    networks:
+      - net        # joignable par nginx-proxy ET par une BD conteneurisée sur ce réseau
+
+networks:
+  net:
+    external: true

@@ -5,6 +5,16 @@ set -e
 echo "📦 Migrations..."
 python manage.py migrate --noinput
 
+# Données initiales : chargées UNIQUEMENT si la base est vide (premier déploiement).
+# Évite d'écraser le contenu édité via l'admin aux redémarrages suivants.
+echo "🌱 Données initiales (si base vide)..."
+if python manage.py shell -c "import sys; from portfolio.models import Project; sys.exit(0 if Project.objects.exists() else 1)"; then
+  echo "  → base déjà peuplée, chargement ignoré."
+else
+  python manage.py loaddata initial
+  echo "  → fixture 'initial' chargée."
+fi
+
 echo "📁 Fichiers statiques..."
 python manage.py collectstatic --noinput --clear
 

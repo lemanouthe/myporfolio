@@ -20,7 +20,9 @@ urlpatterns = [
 if (settings.FRONTEND_DIST / "index.html").exists():
     urlpatterns += [
         re_path(
-            r"^(?!api/|admin/|static/|media/).*$",
+            # Exclut api/admin avec OU sans slash (sinon /admin sert le SPA au
+            # lieu de rediriger vers /admin/), + static/ et media/.
+            r"^(?!api(/|$)|admin(/|$)|static/|media/).*$",
             TemplateView.as_view(template_name="index.html"),
         ),
     ]

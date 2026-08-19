@@ -1,0 +1,324 @@
+[
+{
+  "model": "portfolio.project",
+  "pk": 1,
+  "fields": {
+    "slug": "nisc",
+    "name": "NISC — Plateforme de gestion d'inventaire",
+    "role": "Backend Developer",
+    "context": "API de suivi de stock multi-entrepôts pour une PME logistique : réceptions, mouvements, alertes de seuil et exports comptables.",
+    "challenge": "Requêtes d'agrégation lourdes sur l'historique des mouvements. Refonte du schéma + index composites et mise en cache Redis des tableaux de bord.",
+    "result": "Temps de réponse des dashboards réduit de 4,2 s à 380 ms",
+    "stack_tags": [
+      "Django REST Framework",
+      "PostgreSQL",
+      "Redis",
+      "Docker",
+      "GitHub Actions"
+    ],
+    "repo_url": "",
+    "demo_url": "",
+    "cover": "",
+    "order": 1
+  }
+},
+{
+  "model": "portfolio.project",
+  "pk": 2,
+  "fields": {
+    "slug": "tech-yao",
+    "name": "TECH YAO — Traitement de commandes asynchrone",
+    "role": "Backend Developer",
+    "context": "Back-office e-commerce : génération de factures PDF, notifications et synchronisation avec un service de livraison externe.",
+    "challenge": "Les tâches longues bloquaient les requêtes web. Passage à Celery pour l'asynchrone, avec files prioritaires et reprise sur échec.",
+    "result": "0 timeout en production, ~12k tâches/jour traitées",
+    "stack_tags": [
+      "Django",
+      "Celery",
+      "Redis",
+      "AWS",
+      "Docker"
+    ],
+    "repo_url": "",
+    "demo_url": "",
+    "cover": "",
+    "order": 2
+  }
+},
+{
+  "model": "portfolio.project",
+  "pk": 3,
+  "fields": {
+    "slug": "nan-business",
+    "name": "NaN Business — API SaaS multi-tenant",
+    "role": "Backend Developer",
+    "context": "Plateforme SaaS B2B avec isolation des données par client, facturation à l'usage et rôles/permissions fins.",
+    "challenge": "Isolation multi-tenant fiable et sécurisée sans dupliquer la logique. Middleware de scoping + permissions DRF centralisées.",
+    "result": "Onboarding d'un nouveau client en < 5 min, 99,9% de disponibilité",
+    "stack_tags": [
+      "Django REST Framework",
+      "PostgreSQL",
+      "AWS",
+      "Docker"
+    ],
+    "repo_url": "",
+    "demo_url": "",
+    "cover": "",
+    "order": 3
+  }
+},
+{
+  "model": "portfolio.skillgroup",
+  "pk": 1,
+  "fields": {
+    "label": "Backend",
+    "order": 1
+  }
+},
+{
+  "model": "portfolio.skillgroup",
+  "pk": 2,
+  "fields": {
+    "label": "Données & Files",
+    "order": 2
+  }
+},
+{
+  "model": "portfolio.skillgroup",
+  "pk": 3,
+  "fields": {
+    "label": "Infra & Cloud",
+    "order": 3
+  }
+},
+{
+  "model": "portfolio.skillgroup",
+  "pk": 4,
+  "fields": {
+    "label": "Frontend (appoint)",
+    "order": 4
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 1,
+  "fields": {
+    "group": 1,
+    "name": "python",
+    "level": "expert",
+    "order": 0
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 2,
+  "fields": {
+    "group": 1,
+    "name": "django",
+    "level": "expert",
+    "order": 1
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 3,
+  "fields": {
+    "group": 1,
+    "name": "djangorestframework",
+    "level": "expert",
+    "order": 2
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 4,
+  "fields": {
+    "group": 2,
+    "name": "postgresql",
+    "level": "avance",
+    "order": 0
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 5,
+  "fields": {
+    "group": 2,
+    "name": "redis",
+    "level": "avance",
+    "order": 1
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 6,
+  "fields": {
+    "group": 2,
+    "name": "celery",
+    "level": "avance",
+    "order": 2
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 7,
+  "fields": {
+    "group": 3,
+    "name": "docker",
+    "level": "avance",
+    "order": 0
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 8,
+  "fields": {
+    "group": 3,
+    "name": "aws",
+    "level": "avance",
+    "order": 1
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 9,
+  "fields": {
+    "group": 3,
+    "name": "github-actions",
+    "level": "avance",
+    "order": 2
+  }
+},
+{
+  "model": "portfolio.skill",
+  "pk": 10,
+  "fields": {
+    "group": 4,
+    "name": "vue.js",
+    "level": "intermediaire",
+    "order": 0
+  }
+},
+{
+  "model": "portfolio.education",
+  "pk": 1,
+  "fields": {
+    "school": "Université Informatique",
+    "degree": "Master Génie Logiciel",
+    "start_year": 2017,
+    "end_year": 2019,
+    "order": 1
+  }
+},
+{
+  "model": "portfolio.education",
+  "pk": 2,
+  "fields": {
+    "school": "Université Informatique",
+    "degree": "Licence Informatique",
+    "start_year": 2014,
+    "end_year": 2017,
+    "order": 2
+  }
+},
+{
+  "model": "portfolio.certification",
+  "pk": 1,
+  "fields": {
+    "name": "AWS Certified Cloud Practitioner",
+    "issuer": "Amazon Web Services",
+    "year": 2023,
+    "credential_url": "",
+    "order": 1
+  }
+},
+{
+  "model": "portfolio.certification",
+  "pk": 2,
+  "fields": {
+    "name": "Docker Foundations",
+    "issuer": "Docker",
+    "year": 2022,
+    "credential_url": "",
+    "order": 2
+  }
+},
+{
+  "model": "portfolio.certification",
+  "pk": 3,
+  "fields": {
+    "name": "PostgreSQL for Developers",
+    "issuer": "EDB",
+    "year": 2022,
+    "credential_url": "",
+    "order": 3
+  }
+},
+{
+  "model": "portfolio.certification",
+  "pk": 4,
+  "fields": {
+    "name": "Meta Backend Developer",
+    "issuer": "Coursera / Meta",
+    "year": 2021,
+    "credential_url": "",
+    "order": 4
+  }
+},
+{
+  "model": "portfolio.experience",
+  "pk": 1,
+  "fields": {
+    "company": "NaN Business",
+    "role": "Backend Developer",
+    "location": "Remote",
+    "start": "2023",
+    "end": "",
+    "description": "Conception et maintenance d'APIs SaaS multi-tenant en Django/DRF : modélisation, permissions, facturation à l'usage, CI/CD et déploiement Docker.",
+    "stack_tags": [
+      "Django REST Framework",
+      "PostgreSQL",
+      "AWS",
+      "Docker"
+    ],
+    "order": 1
+  }
+},
+{
+  "model": "portfolio.experience",
+  "pk": 2,
+  "fields": {
+    "company": "TECH YAO",
+    "role": "Backend Developer",
+    "location": "Abidjan / Remote",
+    "start": "2021",
+    "end": "2023",
+    "description": "Développement de back-offices e-commerce, traitement asynchrone avec Celery/Redis et intégrations de services externes (paiement, livraison).",
+    "stack_tags": [
+      "Django",
+      "Celery",
+      "Redis",
+      "AWS"
+    ],
+    "order": 2
+  }
+},
+{
+  "model": "portfolio.experience",
+  "pk": 3,
+  "fields": {
+    "company": "Freelance",
+    "role": "Développeur Web",
+    "location": "Remote",
+    "start": "2019",
+    "end": "2021",
+    "description": "Sites et APIs pour des TPE/PME : Django, PostgreSQL, déploiement sur VPS et premières mises en place de conteneurs Docker.",
+    "stack_tags": [
+      "Django",
+      "PostgreSQL",
+      "Docker"
+    ],
+    "order": 3
+  }
+}
+]

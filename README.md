@@ -52,48 +52,48 @@ cd frontend && npm run build                                    # le front compi
 
 Aucun venv : tout est dans les conteneurs.
 
-Le serveur n'exécute **pas** le code source : il héberge seulement `docker-compose.yml`
-+ `.env` et **tire l'image** depuis GHCR. Pas besoin de cloner tout le repo ni de builder.
+Le serveur n'exécute **pas** le code source et ne clone **pas** le repo : la CI lui **copie**
+(`scp`) `docker-compose.yml` + `.env`, et il **tire l'image** depuis GHCR. Tout est piloté
+par le push GitHub.
 
-**Setup serveur (une fois)** dans `/home/<user>/projects/myporfolio/` :
+**Setup serveur (une fois)** :
 ```bash
-# récupérer les fichiers de déploiement (au choix) :
-#   - copier docker-compose.yml (+ docker-compose.proxy.yml, gen-env.sh) via scp, ou
-#   - git clone https://github.com/lemanouthe/myporfolio.git .   (le repo sert de source)
-./gen-env.sh                                 # génère le .env (secret Django auto, saisie guidée)
-docker network create net                   # réseau externe partagé avec le reverse proxy (si absent)
-mkdir -p static media logs                   # dossiers montés dans le conteneur
-sudo chown -R 1000:1000 static media logs    # uid utilisé par le conteneur
+mkdir -p /home/<user>/projects/myporfolio       # dossier cible du scp (doit exister)
+docker network create net                        # réseau partagé avec le reverse proxy (si absent)
 ```
 Si le serveur n'a **pas encore** de reverse proxy, lancer aussi (une fois, pour tout le
 serveur) : `docker compose -f docker-compose.proxy.yml up -d` — voir
 [NOTE-SERVEUR-PARTAGE.md](NOTE-SERVEUR-PARTAGE.md). Sinon, ignorer ce fichier.
 
-> Le déploiement auto **ne fait pas** `git pull`. Si tu modifies `docker-compose.yml`,
-> re-copie-le (ou `git pull`) manuellement sur le serveur une fois.
-
-**Démarrer / redéployer** (le serveur TIRE l'image, il ne build pas) :
-```bash
-echo <token> | docker login ghcr.io -u lemanouthe --password-stdin   # si package privé
-docker compose up -d --pull always --remove-orphans
-```
-Au démarrage du conteneur, `backend/start.sh` lance `migrate` + `collectstatic` puis
-gunicorn (qui sert à la fois l'API et le SPA Vue). `static/`, `media/`, `logs/` sont des
-dossiers du serveur montés dans le conteneur (uid 1000). nginx-proxy détecte `VIRTUAL_HOST`
-et route tout vers `web:8010` ; le SPA, l'API, `/static` et `/media` sortent du même conteneur.
-
-**TLS** : géré par acme-companion (Let's Encrypt) via `LETSENCRYPT_HOST`/`LETSENCRYPT_EMAIL`.
+Le reste est **automatique** : `git push origin main` → la CI génère le `.env`, le copie
+avec le compose, et déploie. `backend/start.sh` (dans l'image) lance `migrate` +
+`collectstatic` + gunicorn ; `static/`, `media/`, `logs/` sont créés/montés au déploiement.
+nginx-proxy route `VIRTUAL_HOST` → `web:8010` ; TLS par acme-companion.
 
 ## CI/CD (GitHub Actions)
 
-Sur `git push origin main` → 3 jobs : **test** (tests back + build front) → **build-push**
-(image `ghcr.io/lemanouthe/myporfolio:latest` construite et poussée sur GHCR) → **deploy**
-(SSH sur le serveur : `docker login ghcr` + `docker compose up -d --pull always`, puis
-nettoyage scopé `label=com.docker.compose.project=portfolio`). Le serveur ne build ni ne
-`git pull` : il tire simplement la nouvelle image.
+Sur `git push origin main`, 4 jobs s'enchaînent :
+1. **test** — tests backend + build front (vérif compilation).
+2. **build-push** — build de l'image (front + back) → push `ghcr.io/lemanouthe/myporfolio:latest`.
+3. **before-deploy** — `setup_env_prod.sh` génère le `.env` depuis les secrets, puis `scp`
+   copie `.env` + `docker-compose.yml` sur le serveur.
+4. **deploy** — SSH : `docker login ghcr` + `docker compose up -d --pull always`, nettoyage
+   scopé `label=com.docker.compose.project=portfolio`. Le serveur ne build ni ne `git pull`.
 
-Secrets repo requis : `SERVER_HOST`, `SERVER_USER`, `SERVER_SSH_KEY` (accès SSH). Le push/pull
-GHCR utilise le `GITHUB_TOKEN` intégré — aucun secret supplémentaire.
+**Secrets repo à créer** (Settings → Secrets and variables → Actions) :
+
+| Secret | Rôle |
+|---|---|
+| `SERVER_HOST` | IP / domaine du serveur (SSH) |
+| `SERVER_USER` | utilisateur SSH (ex. `ubuntu`) |
+| `SERVER_SSH_KEY` | clé privée SSH |
+| `DJANGO_SECRET_KEY` | secret Django (génère une longue chaîne aléatoire) |
+| `POSTGRES_PASSWORD` | mot de passe de la base |
+| `EMAIL_HOST_PASSWORD` | mot de passe SMTP (app password Gmail) |
+
+Le push/pull GHCR utilise le `GITHUB_TOKEN` intégré — pas de secret supplémentaire. Les
+valeurs **non sensibles** (domaine, nom/host BD, SMTP host, emails) sont en dur dans
+`setup_env_prod.sh` — édite-les là si besoin.
 
 ## Cohabitation avec d'autres projets sur le serveur
 
